@@ -1,6 +1,7 @@
 #include <libdragon.h>
 #include "../../core.h"
 #include "../../minigame.h"
+#include "input.h"
 
 const MinigameDef minigame_def = {
     .gamename = "A Minimal Reproducible Example",
@@ -16,6 +17,9 @@ float fps;
 mpeg2_t *mp2;
 yuv_blitter_t yuvBlitter;
 
+float b_btn_held_duration = 0.0f;
+bool paused = false;
+
 /*==============================
     minigame_init
     The minigame initialization function
@@ -25,7 +29,7 @@ void minigame_init()
     display_init(
         (resolution_t){288, 209, INTERLACE_OFF},
         DEPTH_32_BPP, // 32-bit display mode is mandatory for video playback.
-        8,
+        1,
         GAMMA_NONE,
         FILTERS_DISABLED // FILTERS_DISABLED disables all VI post-processing to achieve the sharpest possible image. If you'd like to soften the image a little bit, switch to FITLERS_RESAMPLE.
     );
@@ -80,18 +84,28 @@ void minigame_fixedloop(float deltatime)
 ==============================*/
 void minigame_loop(float deltatime)
 {
+    process_controller(deltatime);
+
     if (!mpeg2_next_frame(mp2))
     {
-        minigame_end();
-        return;
+        mpeg2_rewind(mp2);
+        mpeg2_next_frame(mp2);
     }
 
-    rdpq_attach(display_get(), NULL);
+    if (!paused)
+    {
+        rdpq_attach(display_get(), NULL);
 
-    yuv_frame_t frame = mpeg2_get_frame(mp2);
-    yuv_blitter_run(&yuvBlitter, &frame);
+        fprintf(stderr, "Video is NOT paused.\n");
+        yuv_frame_t frame = mpeg2_get_frame(mp2);
+        yuv_blitter_run(&yuvBlitter, &frame);
 
-    rdpq_detach_show();
+        rdpq_detach_show();
+    }
+    else
+    {
+        fprintf(stderr, "Video is paused.\n");
+    }
 }
 
 /*==============================
