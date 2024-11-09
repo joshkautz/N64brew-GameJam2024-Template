@@ -86,14 +86,14 @@ void minigame_loop(float deltatime)
 {
     process_controller(deltatime);
 
-    if (!mpeg2_next_frame(mp2))
-    {
-        mpeg2_rewind(mp2);
-        mpeg2_next_frame(mp2);
-    }
-
     if (!paused)
     {
+        if (!mpeg2_next_frame(mp2))
+        {
+            mpeg2_rewind(mp2);
+            mpeg2_next_frame(mp2);
+        }
+
         rdpq_attach(display_get(), NULL);
 
         fprintf(stderr, "Video is NOT paused.\n");
